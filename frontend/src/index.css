@@ -1,0 +1,380 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* --------------------------------------------------
+   AIHire Pro - Skeuomorphic Design System (Vanilla CSS + Tailwind)
+   -------------------------------------------------- */
+
+:root {
+  /* Light Theme Variables */
+  --bg-primary: #f0f2f5;
+  --surface: #ffffff;
+  --surface-low: #f8fafc;
+  --surface-high: #e2e8f0;
+  
+  --text-primary: #1e293b;
+  --text-secondary: #64748b;
+  --text-inverse: #ffffff;
+  
+  --primary: #2563eb;
+  --primary-light: #3b82f6;
+  --primary-glow: rgba(37, 99, 235, 0.2);
+  
+  --success: #10b981;
+  --success-glow: rgba(16, 185, 129, 0.2);
+  
+  --warning: #f59e0b;
+  --error: #ef4444;
+  
+  /* Skeuomorphic Shadows */
+  --shadow-flat: 0 2px 4px rgba(0,0,0,0.05);
+  --shadow-raised: 
+    0 10px 25px -5px rgba(0,0,0,0.05),
+    0 8px 10px -6px rgba(0,0,0,0.05),
+    inset 0 1px 0 rgba(255,255,255,1);
+  --shadow-pressed: 
+    inset 2px 2px 5px rgba(0,0,0,0.08),
+    inset -1px -1px 0 rgba(255,255,255,0.5);
+  --shadow-beveled:
+    0 1px 3px rgba(0,0,0,0.08),
+    0 1px 2px rgba(0,0,0,0.12),
+    inset 0 1px 0 rgba(255,255,255,0.8);
+    
+  --border-light: rgba(0, 0, 0, 0.08);
+  --border-glow: rgba(255, 255, 255, 0.9);
+}
+
+/* Dark Theme Variables */
+[data-theme="dark"] {
+  --bg-primary: #0f172a;
+  --surface: #1e293b;
+  --surface-low: #0f172a;
+  --surface-high: #334155;
+  
+  --text-primary: #f8fafc;
+  --text-secondary: #94a3b8;
+  --text-inverse: #0f172a;
+  
+  --primary: #3b82f6;
+  --primary-light: #60a5fa;
+  --primary-glow: rgba(96, 165, 250, 0.25);
+  
+  --success: #34d399;
+  --success-glow: rgba(52, 211, 153, 0.25);
+  
+  --shadow-raised: 
+    0 15px 30px -10px rgba(0,0,0,0.3),
+    0 10px 15px -10px rgba(0,0,0,0.2),
+    inset 0 1px 0 rgba(255,255,255,0.08);
+  --shadow-pressed: 
+    inset 3px 3px 6px rgba(0,0,0,0.25),
+    inset -1px -1px 0 rgba(255,255,255,0.02);
+  --shadow-beveled:
+    0 2px 4px rgba(0,0,0,0.2),
+    inset 0 1px 0 rgba(255,255,255,0.08);
+    
+  --border-light: rgba(255, 255, 255, 0.08);
+  --border-glow: rgba(255, 255, 255, 0.05);
+}
+
+/* Base resets & typography */
+body {
+  font-family: 'Inter', sans-serif;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* --------------------------------------------------
+   SKEUOMORPHIC UTILITIES
+   -------------------------------------------------- */
+
+/* Tactile Panels & Cards */
+.skeuo-card {
+  background-color: var(--surface);
+  border: 1px solid var(--border-light);
+  border-radius: 16px;
+  box-shadow: var(--shadow-raised);
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease;
+}
+
+.skeuo-card-interactive:hover {
+  transform: translateY(-2px);
+  box-shadow: 
+    0 20px 35px -10px rgba(0,0,0,0.08),
+    0 12px 15px -8px rgba(0,0,0,0.04),
+    inset 0 1px 0 var(--border-glow);
+}
+
+/* Pressed Card states */
+.skeuo-card-pressed {
+  background-color: var(--surface-low);
+  border: 1px solid var(--border-light);
+  border-radius: 16px;
+  box-shadow: var(--shadow-pressed);
+}
+
+/* Glassmorphic Layer overlay */
+.skeuo-glass {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  box-shadow: var(--shadow-raised);
+}
+
+[data-theme="dark"] .skeuo-glass {
+  background: rgba(30, 41, 59, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Tactile Buttons */
+.skeuo-btn {
+  font-weight: 600;
+  border-radius: 12px;
+  padding: 0.75rem 1.5rem;
+  transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border: 1px solid rgba(0,0,0,0.1);
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+
+.skeuo-btn::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: linear-gradient(to bottom, rgba(255,255,255,0.15), rgba(255,255,255,0));
+  pointer-events: none;
+}
+
+.skeuo-btn-primary {
+  background: linear-gradient(135deg, var(--primary-light), var(--primary));
+  color: #ffffff;
+  box-shadow: 
+    0 4px 6px -1px rgba(37, 99, 235, 0.2), 
+    0 2px 4px -1px rgba(37, 99, 235, 0.1),
+    inset 0 1px 0 rgba(255,255,255,0.3);
+}
+
+.skeuo-btn-primary:hover {
+  filter: brightness(1.05);
+  box-shadow: 
+    0 6px 12px -2px rgba(37, 99, 235, 0.3), 
+    0 3px 6px -1px rgba(37, 99, 235, 0.2),
+    inset 0 1px 0 rgba(255,255,255,0.4);
+  transform: translateY(-1px);
+}
+
+.skeuo-btn-primary:active {
+  transform: translateY(1px);
+  box-shadow: var(--shadow-pressed);
+  filter: brightness(0.95);
+}
+
+.skeuo-btn-secondary {
+  background: linear-gradient(to bottom, var(--surface), var(--surface-low));
+  color: var(--text-primary);
+  border: 1px solid var(--border-light);
+  box-shadow: var(--shadow-beveled);
+}
+
+.skeuo-btn-secondary:hover {
+  background: var(--surface);
+  transform: translateY(-1px);
+  box-shadow: 
+    0 4px 6px rgba(0,0,0,0.05),
+    inset 0 1px 0 rgba(255,255,255,1);
+}
+
+.skeuo-btn-secondary:active {
+  transform: translateY(1px);
+  box-shadow: var(--shadow-pressed);
+}
+
+/* Inset Input Fields */
+.skeuo-input {
+  background-color: var(--surface-low);
+  border: 1px solid var(--border-light);
+  border-radius: 12px;
+  padding: 0.75rem 1rem;
+  color: var(--text-primary);
+  box-shadow: var(--shadow-pressed);
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.skeuo-input:focus {
+  border-color: var(--primary);
+  background-color: var(--surface);
+  box-shadow: 
+    0 0 0 3px var(--primary-glow),
+    inset 0 1px 3px rgba(0,0,0,0.05);
+}
+
+/* Circular Glowing Score Gauge */
+.score-gauge {
+  width: 100px;
+  height: 100px;
+  position: relative;
+  border-radius: 50%;
+  box-shadow: var(--shadow-pressed);
+  background: var(--surface-low);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.score-gauge-ring {
+  transform: rotate(-90deg);
+  transform-origin: 50% 50%;
+}
+
+.score-gauge-value {
+  position: absolute;
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--primary);
+  text-shadow: 0 0 8px var(--primary-glow);
+}
+
+/* Drag & Drop File Zone */
+.drop-zone {
+  border: 2px dashed var(--border-light);
+  border-radius: 16px;
+  background-color: var(--surface-low);
+  box-shadow: var(--shadow-pressed);
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.drop-zone.dragover {
+  border-color: var(--primary);
+  background-color: var(--surface);
+  box-shadow: 0 0 15px var(--primary-glow);
+}
+
+/* Sleek toggle switch */
+.theme-switch {
+  width: 50px;
+  height: 26px;
+  background-color: var(--surface-high);
+  border-radius: 13px;
+  position: relative;
+  box-shadow: var(--shadow-pressed);
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.theme-switch-knob {
+  width: 20px;
+  height: 20px;
+  background: linear-gradient(to bottom, #ffffff, #e2e8f0);
+  border-radius: 50%;
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  box-shadow: var(--shadow-beveled);
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+[data-theme="dark"] .theme-switch-knob {
+  transform: translateX(24px);
+  background: linear-gradient(to bottom, #475569, #1e293b);
+}
+
+[data-theme="dark"] .theme-switch {
+  background-color: var(--primary);
+}
+
+/* Skeuomorphic Sidebar items */
+.sidebar-link {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
+  color: var(--text-secondary);
+  font-weight: 500;
+  transition: all 0.15s ease;
+  border: 1px solid transparent;
+}
+
+.sidebar-link:hover {
+  color: var(--text-primary);
+  background-color: var(--surface-high);
+}
+
+.sidebar-link.active {
+  color: var(--primary);
+  background-color: var(--surface);
+  border-color: var(--border-light);
+  box-shadow: var(--shadow-beveled);
+}
+
+/* Skeuomorphic Table design */
+.skeuo-table-container {
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: var(--shadow-pressed);
+  border: 1px solid var(--border-light);
+  background: var(--surface-low);
+}
+
+.skeuo-table th {
+  background: linear-gradient(to bottom, var(--surface), var(--surface-low));
+  border-bottom: 2px solid var(--border-light);
+  color: var(--text-secondary);
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+  padding: 1rem;
+}
+
+.skeuo-table td {
+  padding: 1rem;
+  border-bottom: 1px solid var(--border-light);
+  background-color: var(--surface);
+  transition: background-color 0.1s;
+}
+
+.skeuo-table tr:last-child td {
+  border-bottom: none;
+}
+
+.skeuo-table tr:hover td {
+  background-color: var(--surface-low);
+}
+
+/* Animations */
+@keyframes pulseGlow {
+  0%, 100% { box-shadow: 0 0 10px var(--primary-glow); }
+  50% { box-shadow: 0 0 20px rgba(37, 99, 235, 0.4); }
+}
+
+.glow-active {
+  animation: pulseGlow 2s infinite;
+}
+
+/* Skeleton loader */
+.skeleton {
+  background: linear-gradient(90deg, var(--surface-low) 25%, var(--surface-high) 50%, var(--surface-low) 75%);
+  background-size: 200% 100%;
+  animation: loadingSkeleton 1.5s infinite;
+  border-radius: 4px;
+}
+
+@keyframes loadingSkeleton {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
