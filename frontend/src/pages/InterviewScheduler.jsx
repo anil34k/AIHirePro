@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../App';
 import api from '../api';
 import { Calendar, UserPlus, Clock, FileText, CheckCircle, XCircle } from 'lucide-react';
@@ -8,10 +8,14 @@ export default function InterviewScheduler() {
   const [schedules, setSchedules] = useState([]);
   const [seekers, setSeekers] = useState([]);
   const [jobs, setJobs] = useState([]);
+  const [jobTitle, setJobTitle] = useState('');
+  const [suggestions, setSuggestions] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [jobError, setJobError] = useState('');
+  const suggestRef = useRef(null);
 
   // Form state (Recruiter only)
   const [selectedSeekerId, setSelectedSeekerId] = useState('');
-  const [selectedJobId, setSelectedJobId] = useState('');
   const [scheduledTime, setScheduledTime] = useState('');
   const [notes, setNotes] = useState('');
 
@@ -20,6 +24,14 @@ export default function InterviewScheduler() {
     if (user?.role === 'COMPANY') {
       fetchRecruiterFormData();
     }
+    // Click outside to close suggestions
+    function handleClickOutside(e) {
+      if (suggestRef.current && !suggestRef.current.contains(e.target)) {
+        setShowSuggestions(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
   const fetchSchedules = async () => {
@@ -33,11 +45,9 @@ export default function InterviewScheduler() {
 
   const fetchRecruiterFormData = async () => {
     try {
-      // Fetch seekers
       const seekersRes = await api.get('admin/users/');
       setSeekers(seekersRes.filter(u => u.role === 'SEEKER'));
       
-      // Fetch jobs
       const jobsRes = await api.get('jobs/');
       setJobs(jobsRes);
     } catch (e) {
@@ -45,10 +55,54 @@ export default function InterviewScheduler() {
     }
   };
 
+  const handleJobTitleChange = (e) => {
+    const val = e.target.value;
+    setJobTitle(val);
+    setJobError('');
+
+    // Filter suggestions from existing jobs
+    if (val.length >= 1 && jobs.length > 0) {
+      const filtered = jobs
+        .filter(j => j.title.toLowerCase().includes(val.toLowerCase()))
+        .map(j => j.title)
+        .slice(0, 6);
+      setSuggestions(filtered);
+      setShowSuggestions(filtered.length > 0);
+    } else {
+      setSuggestions([]);
+      setShowSuggestions(false);
+    }
+  };
+
+  const selectSuggestion = (title) => {
+    setJobTitle(title);
+    setSuggestions([]);
+    setShowSuggestions(false);
+    setJobError('');
+  };
+
+  const validateJobTitle = () => {
+    const val = jobTitle.trim();
+    if (!val || val.length < 3) {
+      setJobError('Please enter a valid job position.');
+      return false;
+    }
+    if (val.length > 100) {
+      setJobError('Job position must be under 100 characters.');
+      return false;
+    }
+    setJobError('');
+    return true;
+  };
+
   const scheduleInterview = async (e) => {
     e.preventDefault();
-    if (!selectedSeekerId || !selectedJobId || !scheduledTime) {
+    if (!selectedSeekerId || !scheduledTime) {
       showToast("Missing fields", "Please fill in all target fields.", "warning");
+      return;
+    }
+    if (!validateJobTitle()) {
+      showToast("Invalid Position", "Please enter a valid job position (min 3 characters).", "warning");
       return;
     }
 
@@ -56,14 +110,14 @@ export default function InterviewScheduler() {
     try {
       const res = await api.post('scheduler/', {
         candidate_id: selectedSeekerId,
-        job_id: selectedJobId,
+        job_title: jobTitle.trim(),
         scheduled_time: scheduledTime,
         notes: notes
       });
       showToast("Scheduled", "Candidate has been notified of the interview request.", "success");
       setSchedules(prev => [res, ...prev]);
       setSelectedSeekerId('');
-      setSelectedJobId('');
+      setJobTitle('');
       setScheduledTime('');
       setNotes('');
       stopLoading();
@@ -128,19 +182,40 @@ export default function InterviewScheduler() {
                 </select>
               </div>
 
-              <div className="flex flex-col gap-1">
-                <label className="text-slate-500 uppercase tracking-wider block">Target Job opening</label>
-                <select
-                  className="skeuo-input bg-transparent w-full text-xs"
-                  value={selectedJobId}
-                  onChange={(e) => setSelectedJobId(e.target.value)}
+              <div className="flex flex-col gap-1" ref={suggestRef} style={{position:'relative'}}>
+                <label className="text-slate-500 uppercase tracking-wider block">Target Job Opening</label>
+                <input
+                  type="text"
+                  className="skeuo-input w-full text-xs"
+                  placeholder="Enter Job Position"
+                  value={jobTitle}
+                  onChange={handleJobTitleChange}
+                  onBlur={validateJobTitle}
                   required
-                >
-                  <option value="" className="dark:bg-slate-900">Select Position</option>
-                  {jobs.map(job => (
-                    <option key={job.id} value={job.id} className="dark:bg-slate-900">{job.title}</option>
-                  ))}
-                </select>
+                />
+                {jobError && <span className="text-[10px] text-red-500 font-semibold mt-0.5">{jobError}</span>}
+                {showSuggestions && (
+                  <div style={{
+                    position:'absolute', top:'100%', left:0, right:0, zIndex:50,
+                    background:'var(--skeuo-bg,#1e293b)', border:'1px solid var(--skeuo-border,#334155)',
+                    borderRadius:'10px', marginTop:'2px', boxShadow:'0 8px 24px rgba(0,0,0,0.3)',
+                    maxHeight:'200px', overflowY:'auto'
+                  }}>
+                    {suggestions.map((title, i) => (
+                      <div key={i}
+                        onMouseDown={() => selectSuggestion(title)}
+                        style={{
+                          padding:'8px 12px', cursor:'pointer', fontSize:'12px',
+                          borderBottom:'1px solid rgba(255,255,255,0.05)',
+                          color:'var(--skeuo-text,#e2e8f0)'
+                        }}
+                        className="hover:bg-slate-700"
+                      >
+                        {title}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <div className="flex flex-col gap-1">

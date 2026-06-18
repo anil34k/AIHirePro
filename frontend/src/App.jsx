@@ -14,10 +14,11 @@ import Portfolio from './pages/Portfolio';
 import RecruiterAnalytics from './pages/RecruiterAnalytics';
 import InterviewScheduler from './pages/InterviewScheduler';
 import AITelemetry from './pages/AITelemetry';
-import CareerCoach from './pages/CareerCoach';
 import TalentScout from './pages/TalentScout';
 import ResumeOptimizer from './pages/ResumeOptimizer';
 import CodeArena from './pages/CodeArena';
+import CodingChallengeManager from './pages/CodingChallengeManager';
+import ProfileSetup from './pages/ProfileSetup';
 
 import { 
   Sun, Moon, Briefcase, LogOut, ChartPie, UserCheck, 
@@ -43,7 +44,8 @@ function AppContent() {
     if (user.role === 'ADMIN') {
       links = [
         { name: 'Telemetry Dashboard', icon: <ChartPie className="w-5 h-5" />, path: '/admin-dashboard' },
-        { name: 'AI Telemetry Center', icon: <Activity className="w-5 h-5" />, path: '/admin-telemetry' }
+        { name: 'AI Telemetry Center', icon: <Activity className="w-5 h-5" />, path: '/admin-telemetry' },
+        { name: 'Coding Challenge Manager', icon: <Code className="w-5 h-5" />, path: '/admin/coding-challenges' }
       ];
     } else if (user.role === 'COMPANY') {
       links = [
@@ -58,7 +60,6 @@ function AppContent() {
         { name: 'Mock Interview Arena', icon: <Brain className="w-5 h-5" />, path: '/mock-interview' },
         { name: 'Upskilling Academy', icon: <Code className="w-5 h-5" />, path: '/academy' },
         { name: 'Interview Invites', icon: <Calendar className="w-5 h-5" />, path: '/scheduler' },
-        { name: 'AI Career Coach', icon: <MessageSquare className="w-5 h-5" />, path: '/career-coach' },
         { name: 'ATS Resume Optimizer', icon: <FileText className="w-5 h-5" />, path: '/resume-optimizer' },
         { name: 'AI Coding Arena', icon: <Code className="w-5 h-5" />, path: '/code-arena' },
         { name: 'Public Portfolio Settings', icon: <User className="w-5 h-5" />, path: '/portfolio-settings' }
@@ -154,6 +155,11 @@ function AppContent() {
             } />
             
             {/* Seeker Dashboard & Modules */}
+            <Route path="/profile-setup" element={
+              <ProtectedRoute allowedRoles={['SEEKER']}>
+                <ProfileSetup />
+              </ProtectedRoute>
+            } />
             <Route path="/seeker-dashboard" element={
               <ProtectedRoute allowedRoles={['SEEKER']}>
                 <SeekerDashboard />
@@ -174,11 +180,7 @@ function AppContent() {
                 <Portfolio />
               </ProtectedRoute>
             } />
-            <Route path="/career-coach" element={
-              <ProtectedRoute allowedRoles={['SEEKER']}>
-                <CareerCoach />
-              </ProtectedRoute>
-            } />
+
             <Route path="/resume-optimizer" element={
               <ProtectedRoute allowedRoles={['SEEKER']}>
                 <ResumeOptimizer />
@@ -221,6 +223,11 @@ function AppContent() {
             <Route path="/admin-telemetry" element={
               <ProtectedRoute allowedRoles={['ADMIN']}>
                 <AITelemetry />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/coding-challenges" element={
+              <ProtectedRoute allowedRoles={['ADMIN']}>
+                <CodingChallengeManager />
               </ProtectedRoute>
             } />
 
@@ -362,7 +369,7 @@ export default function App() {
 
   return (
     <AuthContext.Provider value={{
-      user, login, logout, theme, toggleTheme, toasts, showToast, removeToast, loading, startLoading, stopLoading
+      user, login, logout, theme, toggleTheme, toasts, showToast, removeToast, loading, startLoading, stopLoading, fetchUser
     }}>
       <Router>
         <AppContent />
@@ -379,6 +386,16 @@ function ProtectedRoute({ children, allowedRoles }) {
     return <Navigate to="/auth" state={{ from: location }} replace />;
   }
 
+  // Redirection for incomplete seeker profile
+  if (user.role === 'SEEKER' && (!user.profile || !user.profile.is_setup_completed) && location.pathname !== '/profile-setup') {
+    return <Navigate to="/profile-setup" replace />;
+  }
+
+  // Prevent accessing setup if already completed
+  if (user.role === 'SEEKER' && user.profile && user.profile.is_setup_completed && location.pathname === '/profile-setup') {
+    return <Navigate to="/seeker-dashboard" replace />;
+  }
+
   if (allowedRoles && !allowedRoles.includes(user.role)) {
     if (user.role === 'ADMIN') return <Navigate to="/admin-dashboard" replace />;
     if (user.role === 'COMPANY') return <Navigate to="/company-dashboard" replace />;
@@ -392,6 +409,9 @@ function PublicRoute({ children }) {
   const { user } = useAuth();
 
   if (user) {
+    if (user.role === 'SEEKER' && (!user.profile || !user.profile.is_setup_completed)) {
+      return <Navigate to="/profile-setup" replace />;
+    }
     if (user.role === 'ADMIN') return <Navigate to="/admin-dashboard" replace />;
     if (user.role === 'COMPANY') return <Navigate to="/company-dashboard" replace />;
     return <Navigate to="/seeker-dashboard" replace />;

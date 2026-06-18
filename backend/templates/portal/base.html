@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en" data-bs-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Candidate Portal — AIHire Pro{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="{% static 'portal/css/style.css' %}" rel="stylesheet">
+</head>
+<body>
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Sidebar Overlay -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- Sidebar -->
+    <nav class="sidebar" id="sidebar">
+        <div class="sidebar-brand">
+            <div class="brand-icon"><i class="bi bi-briefcase-fill"></i></div>
+            <div class="brand-text">
+                <span class="brand-name">AIHire Pro</span>
+                <span class="brand-label">Enterprise Suite</span>
+            </div>
+        </div>
+        <div class="sidebar-menu">
+            <a href="#" class="menu-item active" data-section="dashboard">
+                <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
+                <span>Seeker Console</span>
+            </a>
+            <a href="#" class="menu-item" data-section="mock-interview">
+                <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+                <span>Mock Interview Arena</span>
+            </a>
+            <a href="#" class="menu-item" data-section="academy">
+                <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c0 1.1 2.7 3 6 3s6-1.9 6-3v-5"/></svg>
+                <span>Upskilling Academy</span>
+            </a>
+            <a href="#" class="menu-item" data-section="invites">
+                <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                <span>Interview Invites</span>
+            </a>
+            <a href="#" class="menu-item" data-section="resume-optimizer">
+                <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                <span>ATS Resume Optimizer</span>
+            </a>
+            <a href="#" class="menu-item" data-section="coding-arena">
+                <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+                <span>AI Coding Arena</span>
+            </a>
+            <a href="#" class="menu-item" data-section="portfolio-settings">
+                <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                <span>Public Portfolio Settings</span>
+            </a>
+        </div>
+        <div class="sidebar-footer">
+            <a href="{% url 'portal_logout' %}" class="menu-item logout-item">
+                <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                <span>Logout</span>
+            </a>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="main-content" id="mainContent">
+        <!-- Top Header -->
+        <header class="top-header">
+            <div class="header-left">
+                <button class="sidebar-toggle" id="sidebarToggle" title="Toggle sidebar">
+                    <i class="bi bi-list"></i>
+                </button>
+                <div class="header-brand-sm d-none">
+                    <div class="brand-icon-sm"><i class="bi bi-briefcase-fill"></i></div>
+                    <span class="fw-bold">AIHire Pro</span>
+                </div>
+            </div>
+            <div class="header-right">
+                <button class="theme-toggle" id="themeToggle" title="Toggle theme">
+                    <i class="bi bi-sun-fill" id="themeIcon"></i>
+                </button>
+                <div class="notification-bell" id="notificationBell" title="Notifications">
+                    <i class="bi bi-bell-fill"></i>
+                    <span class="notification-dot" id="notificationDot"></span>
+                </div>
+                <div class="user-profile-dropdown">
+                    <div class="user-avatar-sm" id="userDropdownToggle">
+                        {% if user.profile_picture %}
+                        <img src="{{ user.profile_picture.url }}" alt="{{ user.username }}">
+                        {% else %}
+                        <div class="avatar-placeholder">{{ user.username|first|upper }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="dropdown-menu-custom" id="userDropdown">
+                        <div class="dropdown-header-custom">
+                            <strong>{{ user.get_full_name|default:user.username }}</strong>
+                            <span class="text-muted small">Job Seeker</span>
+                        </div>
+                        <div class="dropdown-divider-custom"></div>
+                        <a class="dropdown-item-custom" href="#edit-profile-tab" onclick="switchTab('edit-profile-tab')">
+                            <i class="bi bi-person-gear me-2"></i>Edit Profile
+                        </a>
+                        <a class="dropdown-item-custom" href="{% url 'portal_logout' %}">
+                            <i class="bi bi-box-arrow-right me-2"></i>Logout
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Page Content -->
+        <div class="page-content">
+            {% block content %}{% endblock %}
+        </div>
+    </div>
+
+    <!-- Notification Panel -->
+    <div class="notification-panel" id="notificationPanel">
+        <div class="notification-panel-header">
+            <h6>Notifications</h6>
+            <button class="btn-close-sm" id="closeNotifications"><i class="bi bi-x-lg"></i></button>
+        </div>
+        <div class="notification-panel-body">
+            {% for n in notifications %}
+            <div class="notification-item {% if not n.is_read %}unread{% endif %}">
+                <div class="notif-icon"><i class="bi {% if n.notification_type == 'HIRE' %}bi-trophy{% elif n.notification_type == 'EMAIL' %}bi-envelope{% else %}bi-bell{% endif %}"></i></div>
+                <div class="notif-content">
+                    <strong>{{ n.title }}</strong>
+                    <p>{{ n.message }}</p>
+                    <small>{{ n.created_at|timesince }} ago</small>
+                </div>
+            </div>
+            {% empty %}
+            <div class="text-center text-muted py-4"><i class="bi bi-bell-slash fs-3"></i><p class="mt-2 small">No notifications</p></div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{% static 'portal/js/dashboard.js' %}"></script>
+</body>
+</html>

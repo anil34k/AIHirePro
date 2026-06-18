@@ -112,7 +112,7 @@ const api = {
   post: (path, body, options) => request(path, { ...options, method: 'POST', body }),
   put: (path, body, options) => request(path, { ...options, method: 'PUT', body }),
   patch: (path, body, options) => request(path, { ...options, method: 'PATCH', body }),
-  delete: (path, options) => request(path, { ...options, method: 'DELETE' }),
+  delete: (path, body, options) => request(path, { ...options, method: 'DELETE', body: body || undefined }),
 };
 
 export default api;

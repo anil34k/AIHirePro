@@ -436,10 +436,6 @@ class AIHireProQATestSuite(APITestCase):
         telemetry_res = self.client.get(reverse('api_admin_telemetry'))
         self.assertEqual(telemetry_res.status_code, status.HTTP_200_OK)
 
-        # 9. Career Coach Chatbot (as Seeker)
-        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {seeker_token}')
-        chatbot_res = self.client.post(reverse('api_chatbot_chat'), {"message": "Give me career advice"}, format='json')
-        self.assertEqual(chatbot_res.status_code, status.HTTP_200_OK)
 
         # 10. Talent Scout (as Recruiter)
         self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {recruiter_token}')
@@ -484,4 +480,73 @@ class AIHireProQATestSuite(APITestCase):
             "language": "python"
         }, format='json')
         self.assertEqual(code_run_res.status_code, status.HTTP_200_OK)
+
+    def test_resume_parser_date_year_robustness(self):
+        seeker = User.objects.create(username="robustness_seeker", role="SEEKER")
+        profile = JobSeekerProfile.objects.create(user=seeker)
+        
+        # Test education setter robustness with various non-integer years
+        profile.education = [
+            {
+                "degree": "B.Tech",
+                "school": "IIT",
+                "field": "CS",
+                "grade": "9.5",
+                "start_year": "2020",
+                "end_year": "Present",
+                "description": "Graduated"
+            },
+            {
+                "degree": "M.Tech",
+                "school": "IISc",
+                "field": "AI",
+                "grade": "9.8",
+                "start_year": "2024",
+                "end_year": "",
+                "description": ""
+            }
+        ]
+        
+        educations = profile.educations.all()
+        self.assertEqual(educations.count(), 2)
+        self.assertEqual(educations[0].start_year, 2020)
+        self.assertEqual(educations[0].end_year, 2026) # Fallback default
+        self.assertEqual(educations[1].start_year, 2024)
+        self.assertEqual(educations[1].end_year, 2026) # Fallback default
+        
+        # Test experience date parsing robustness
+        profile.experience = [
+            {
+                "role": "Software Engineer",
+                "company": "Google",
+                "employment_type": "Full-time",
+                "location": "Remote",
+                "start_date": "2021-05", # %Y-%m format
+                "end_date": "Present", # non-standard format
+                "currently_working": False,
+                "description": ""
+            },
+            {
+                "role": "Intern",
+                "company": "Meta",
+                "employment_type": "Internship",
+                "location": "Remote",
+                "start_date": "2020", # %Y format
+                "end_date": "2021", # %Y format
+                "currently_working": False,
+                "description": ""
+            }
+        ]
+        
+        experiences = profile.experiences.all().order_by('id')
+        self.assertEqual(experiences.count(), 2)
+        # 2021-05 should be parsed to 2021-05-01
+        self.assertEqual(experiences[0].start_date.year, 2021)
+        self.assertEqual(experiences[0].start_date.month, 5)
+        self.assertEqual(experiences[0].end_date, None)
+        self.assertTrue(experiences[0].currently_working) # end_date is Present
+        
+        # Intern
+        self.assertEqual(experiences[1].start_date.year, 2020)
+        self.assertEqual(experiences[1].end_date.year, 2021)
 

@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AIHire Pro — Candidate Login</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            position: relative;
+            overflow: hidden;
+        }
+        body::before {
+            content: '';
+            position: absolute;
+            width: 600px; height: 600px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(99,102,241,0.15), transparent);
+            top: -200px; right: -200px;
+        }
+        body::after {
+            content: '';
+            position: absolute;
+            width: 500px; height: 500px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(168,85,247,0.1), transparent);
+            bottom: -150px; left: -150px;
+        }
+        .login-container {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            max-width: 440px;
+            padding: 20px;
+        }
+        .login-card {
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            padding: 40px 35px;
+            box-shadow: 0 25px 60px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,255,255,0.1);
+        }
+        .logo-section {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+        .logo-icon {
+            width: 56px; height: 56px;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            border-radius: 16px;
+            display: inline-flex; align-items: center; justify-content: center;
+            font-size: 28px; color: white;
+            margin-bottom: 12px;
+            box-shadow: 0 8px 24px rgba(99,102,241,0.3);
+        }
+        .logo-text { font-size: 22px; font-weight: 700; color: #1e293b; }
+        .logo-sub { font-size: 13px; color: #94a3b8; font-weight: 500; letter-spacing: 1px; }
+        .form-control {
+            border-radius: 12px; padding: 12px 16px;
+            border: 2px solid #e2e8f0;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        .form-control:focus {
+            border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99,102,241,0.15);
+        }
+        .btn-login {
+            width: 100%; padding: 13px;
+            border-radius: 12px; border: none;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            color: white; font-weight: 600; font-size: 15px;
+            transition: all 0.3s;
+        }
+        .btn-login:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(99,102,241,0.35); }
+        .error-msg {
+            background: #fef2f2; border: 1px solid #fecaca;
+            border-radius: 10px; padding: 12px 16px;
+            color: #dc2626; font-size: 13px; margin-bottom: 16px;
+        }
+        .input-group-text {
+            border-radius: 12px 0 0 12px; border: 2px solid #e2e8f0;
+            border-right: none; background: #f8fafc;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-card">
+            <div class="logo-section">
+                <div class="logo-icon"><i class="bi bi-briefcase-fill"></i></div>
+                <div class="logo-text">AIHire Pro</div>
+                <div class="logo-sub">CANDIDATE PORTAL</div>
+            </div>
+            {% if error %}
+            <div class="error-msg"><i class="bi bi-exclamation-triangle-fill me-2"></i>{{ error }}</div>
+            {% endif %}
+            <form method="post">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label class="form-label fw-medium text-muted small">Username</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-light"><i class="bi bi-person text-primary"></i></span>
+                        <input type="text" name="username" class="form-control" placeholder="Enter username" required>
+                    </div>
+                </div>
+                <div class="mb-4">
+                    <label class="form-label fw-medium text-muted small">Password</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-light"><i class="bi bi-lock text-primary"></i></span>
+                        <input type="password" name="password" class="form-control" placeholder="Enter password" required>
+                    </div>
+                </div>
+                <button type="submit" class="btn-login">
+                    <i class="bi bi-box-arrow-in-right me-2"></i>Sign In
+                </button>
+            </form>
+            <div class="text-center mt-4">
+                <p class="text-muted small mb-0">Accessing the main API at <code>http://localhost:8000/api/</code></p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

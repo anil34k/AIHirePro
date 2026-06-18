@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% if portfolio_user %}{{ portfolio_user.get_full_name|default:portfolio_user.username }} - Portfolio{% else %}Portfolio{% endif %} | AIHire Pro</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .portfolio-wrapper {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+        }
+
+        /* Error states */
+        .error-container {
+            text-align: center;
+            max-width: 480px;
+        }
+        .error-container .error-icon {
+            width: 80px; height: 80px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            font-size: 36px;
+        }
+        .error-container .error-icon.user-not-found { background: #fee2e2; color: #991b1b; }
+        .error-container .error-icon.no-portfolio { background: #fef3c7; color: #92400e; }
+        .error-container .error-icon.private { background: #e0e7ff; color: #3730a3; }
+        .error-container h2 { font-size: 22px; font-weight: 700; color: #1e293b; margin-bottom: 8px; }
+        .error-container p { font-size: 14px; color: #64748b; margin-bottom: 24px; }
+        .error-container .btn-group { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+        .btn-home {
+            padding: 10px 24px;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .btn-home:hover { opacity: 0.9; color: #fff; }
+        .btn-outline {
+            padding: 10px 24px;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #64748b;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .btn-outline:hover { background: #f8fafc; color: #1e293b; }
+
+        /* Portfolio content */
+        .portfolio-content {
+            width: 100%;
+            max-width: 900px;
+        }
+        .profile-header {
+            text-align: center;
+            padding: 40px 20px;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            border-radius: 20px;
+            color: #fff;
+            margin-bottom: 24px;
+        }
+        .profile-header .avatar {
+            width: 80px; height: 80px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 16px;
+            font-size: 32px;
+            font-weight: 700;
+        }
+        .profile-header h1 { font-size: 28px; font-weight: 700; }
+        .profile-header .headline { font-size: 15px; opacity: 0.85; margin-top: 4px; }
+        .profile-header .links { margin-top: 16px; display: flex; gap: 12px; justify-content: center; }
+        .profile-header .links a { color: #fff; font-size: 20px; opacity: 0.7; transition: opacity 0.2s; }
+        .profile-header .links a:hover { opacity: 1; }
+
+        .section-card {
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 20px;
+        }
+        .section-card h3 {
+            font-size: 16px;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .section-card h3 .bi { color: #6366f1; }
+        .skill-tags { display: flex; flex-wrap: wrap; gap: 8px; }
+        .skill-tag {
+            padding: 4px 14px;
+            background: #f1f5f9;
+            border-radius: 20px;
+            font-size: 13px;
+            color: #1e293b;
+            font-weight: 500;
+        }
+        .timeline-item {
+            display: flex;
+            gap: 12px;
+            padding: 12px 0;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .timeline-item:last-child { border-bottom: none; }
+        .timeline-dot {
+            width: 10px; height: 10px;
+            border-radius: 50%;
+            background: #6366f1;
+            margin-top: 6px;
+            flex-shrink: 0;
+        }
+        .timeline-content h5 { font-size: 14px; font-weight: 600; color: #1e293b; margin-bottom: 2px; }
+        .timeline-content .sub { font-size: 13px; color: #64748b; }
+        .timeline-content .period { font-size: 12px; color: #94a3b8; }
+        .timeline-content p { font-size: 13px; color: #64748b; margin-top: 4px; }
+        .project-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+        .project-card {
+            padding: 16px;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+        }
+        .project-card h5 { font-size: 14px; font-weight: 600; color: #1e293b; margin-bottom: 4px; }
+        .project-card p { font-size: 13px; color: #64748b; }
+        .project-card .tech { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; }
+        .project-card .tech span { padding: 2px 8px; background: #f1f5f9; border-radius: 4px; font-size: 11px; color: #64748b; }
+        .empty-section { text-align: center; padding: 20px; color: #94a3b8; font-size: 13px; }
+        .navbar-portfolio {
+            padding: 12px 24px;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .navbar-portfolio .brand { font-weight: 700; color: #6366f1; text-decoration: none; font-size: 16px; }
+    </style>
+</head>
+<body>
+    <!-- Top nav -->
+    <nav class="navbar-portfolio">
+        <a href="/" class="brand"><i class="bi bi-briefcase-fill me-1"></i>AIHire Pro</a>
+        <a href="/" style="font-size:13px;color:#64748b;text-decoration:none"><i class="bi bi-house me-1"></i>Home</a>
+    </nav>
+
+    <div class="portfolio-wrapper">
+        {% if error_type %}
+        <!-- ERROR STATES -->
+        <div class="error-container">
+            {% if error_type == 'user_not_found' %}
+            <div class="error-icon user-not-found"><i class="bi bi-person-x"></i></div>
+            <h2>User not found.</h2>
+            <p>The profile "{{ username }}" does not exist. Please check the URL or search for another profile.</p>
+            {% elif error_type == 'no_portfolio' %}
+            <div class="error-icon no-portfolio"><i class="bi bi-file-earmark-x"></i></div>
+            <h2>No portfolio available.</h2>
+            <p>This user has not created a portfolio yet.</p>
+            {% elif error_type == 'private' %}
+            <div class="error-icon private"><i class="bi bi-lock"></i></div>
+            <h2>This portfolio is private.</h2>
+            <p>The owner has set this portfolio to private.</p>
+            {% endif %}
+            <div class="btn-group">
+                <a href="/" class="btn-home"><i class="bi bi-house"></i>Back to Home</a>
+                <a href="javascript:history.back()" class="btn-outline"><i class="bi bi-arrow-left"></i>Go Back</a>
+            </div>
+        </div>
+
+        {% else %}
+        <!-- PORTFOLIO CONTENT -->
+        <div class="portfolio-content">
+            <!-- Profile Header -->
+            <div class="profile-header">
+                <div class="avatar">{{ portfolio_user.first_name|first|default:portfolio_user.username|first|upper }}</div>
+                <h1>{{ portfolio_user.get_full_name|default:portfolio_user.username }}</h1>
+                {% if profile and profile.headline %}<p class="headline">{{ profile.headline }}</p>{% endif %}
+                {% if profile and profile.location %}<p style="font-size:13px;opacity:0.7;margin-top:4px"><i class="bi bi-geo-alt"></i> {{ profile.location }}</p>{% endif %}
+                <div class="links">
+                    {% if linkedin %}<a href="{{ linkedin }}" target="_blank" title="LinkedIn"><i class="bi bi-linkedin"></i></a>{% endif %}
+                    {% if github %}<a href="{{ github }}" target="_blank" title="GitHub"><i class="bi bi-github"></i></a>{% endif %}
+                    {% if portfolio_url %}<a href="{{ portfolio_url }}" target="_blank" title="Portfolio"><i class="bi bi-globe"></i></a>{% endif %}
+                </div>
+            </div>
+
+            <!-- About -->
+            {% if profile and profile.summary %}
+            <div class="section-card">
+                <h3><i class="bi bi-person"></i>About</h3>
+                <p style="font-size:14px;color:#64748b">{{ profile.summary }}</p>
+            </div>
+            {% endif %}
+
+            <!-- Skills -->
+            <div class="section-card">
+                <h3><i class="bi bi-code-slash"></i>Skills</h3>
+                {% if skills %}
+                <div class="skill-tags">
+                    {% for s in skills %}<span class="skill-tag">{{ s.name }}</span>{% endfor %}
+                </div>
+                {% else %}
+                <div class="empty-section">No skills listed.</div>
+                {% endif %}
+            </div>
+
+            <!-- Education -->
+            <div class="section-card">
+                <h3><i class="bi bi-mortarboard"></i>Education</h3>
+                {% if education %}
+                    {% for edu in education %}
+                    <div class="timeline-item">
+                        <div class="timeline-dot"></div>
+                        <div class="timeline-content">
+                            <h5>{{ edu.degree }}</h5>
+                            <div class="sub">{{ edu.college }}{% if edu.branch %} — {{ edu.branch }}{% endif %}</div>
+                            <div class="period">{{ edu.start_year }} - {{ edu.end_year }}{% if edu.cgpa %} | CGPA: {{ edu.cgpa }}{% endif %}</div>
+                            {% if edu.description %}<p>{{ edu.description }}</p>{% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                <div class="empty-section">No education listed.</div>
+                {% endif %}
+            </div>
+
+            <!-- Experience -->
+            <div class="section-card">
+                <h3><i class="bi bi-briefcase"></i>Experience</h3>
+                {% if experience %}
+                    {% for exp in experience %}
+                    <div class="timeline-item">
+                        <div class="timeline-dot"></div>
+                        <div class="timeline-content">
+                            <h5>{{ exp.job_title }}</h5>
+                            <div class="sub">{{ exp.company_name }}{% if exp.location %} — {{ exp.location }}{% endif %}</div>
+                            <div class="period">{{ exp.start_date|date:"M Y" }} - {% if exp.currently_working %}Present{% else %}{{ exp.end_date|date:"M Y" }}{% endif %}</div>
+                            {% if exp.description %}<p>{{ exp.description }}</p>{% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                <div class="empty-section">No experience listed.</div>
+                {% endif %}
+            </div>
+
+            <!-- Projects -->
+            {% if projects %}
+            <div class="section-card">
+                <h3><i class="bi bi-folder2-open"></i>Projects</h3>
+                <div class="project-grid">
+                    {% for proj in projects %}
+                    <div class="project-card">
+                        <h5>{{ proj.name }}</h5>
+                        {% if proj.description %}<p>{{ proj.description }}</p>{% endif %}
+                        {% if proj.technologies_used %}
+                        <div class="tech">
+                            {% for t in proj.technologies_used %}<span>{{ t }}</span>{% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Certifications -->
+            {% if certifications %}
+            <div class="section-card">
+                <h3><i class="bi bi-patch-check"></i>Certifications</h3>
+                {% for cert in certifications %}
+                <div class="timeline-item">
+                    <div class="timeline-dot" style="background:#f59e0b"></div>
+                    <div class="timeline-content">
+                        <h5>{{ cert.name }}</h5>
+                        <div class="sub">{{ cert.issuing_organization }}</div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</body>
+</html>

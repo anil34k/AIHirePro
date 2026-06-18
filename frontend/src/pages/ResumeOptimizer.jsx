@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useAuth } from '../App';
 import api from '../api';
 import { Award, BrainCircuit, FileCheck, CheckCircle2, ChevronRight } from 'lucide-react';
+import { marked } from 'marked';
 
 export default function ResumeOptimizer() {
   const { startLoading, stopLoading, showToast } = useAuth();
@@ -27,6 +28,122 @@ export default function ResumeOptimizer() {
     }
   };
 
+  const downloadMarkdownResume = () => {
+    if (!report || !report.optimized_resume) return;
+    const blob = new Blob([report.optimized_resume], { type: 'text/markdown' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'optimized_resume.md';
+    link.click();
+    URL.revokeObjectURL(url);
+    showToast("Downloaded", "Optimized resume markdown downloaded successfully.", "success");
+  };
+
+  const printResume = () => {
+    if (!report || !report.optimized_resume) return;
+    
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>Optimized Resume</title>
+          <style>
+            body {
+              font-family: "Times New Roman", Times, Baskerville, Georgia, serif;
+              line-height: 1.4;
+              color: #000;
+              padding: 40px;
+              max-width: 800px;
+              margin: 0 auto;
+              background-color: #fff;
+            }
+            h1 {
+              text-align: center;
+              font-size: 22px;
+              font-weight: bold;
+              margin-top: 0;
+              margin-bottom: 5px;
+              text-transform: uppercase;
+              color: #000;
+              border-bottom: none;
+              padding-bottom: 0;
+            }
+            /* Center contact info paragraphs immediately following h1 */
+            h1 ~ p {
+              text-align: center;
+              margin: 3px 0;
+              font-size: 13px;
+              color: #333;
+            }
+            /* Reset body paragraphs to be left aligned */
+            h2 ~ p, 
+            h2 ~ ul p {
+              text-align: left;
+            }
+            h2 {
+              font-size: 15px;
+              font-weight: bold;
+              color: #000;
+              border-bottom: 2px solid #0056b3; /* Blue underline */
+              margin-top: 18px;
+              margin-bottom: 8px;
+              padding-bottom: 2px;
+              text-transform: uppercase;
+              letter-spacing: 0.5px;
+              text-align: left;
+            }
+            h3 {
+              font-size: 13px;
+              font-weight: bold;
+              margin-top: 10px;
+              margin-bottom: 4px;
+              color: #000;
+              text-align: left;
+            }
+            ul {
+              margin-top: 4px;
+              margin-bottom: 6px;
+              padding-left: 20px;
+              list-style-type: disc;
+            }
+            li {
+              margin-bottom: 3px;
+              font-size: 13px;
+              line-height: 1.4;
+              color: #111;
+              text-align: left;
+            }
+            a {
+              color: #0056b3;
+              text-decoration: underline;
+            }
+            @media print {
+              body {
+                padding: 0;
+                margin: 0;
+              }
+              @page {
+                margin: 15mm;
+              }
+            }
+          </style>
+        </head>
+        <body>
+          <div id="content" class="resume-paper"></div>
+          <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+          <script>
+            document.getElementById('content').innerHTML = marked.parse(\`${report.optimized_resume.replace(/`/g, '\\`').replace(/\$/g, '\\$')}\`);
+            window.onload = function() {
+              window.print();
+            };
+          </script>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+  };
+
   const getScoreColor = (score) => {
     if (score >= 80) return 'text-green-500';
     if (score >= 60) return 'text-amber-500';
@@ -35,6 +152,72 @@ export default function ResumeOptimizer() {
 
   return (
     <div className="space-y-8 max-w-4xl mx-auto">
+      <style>{`
+        .resume-paper {
+          font-family: "Times New Roman", Times, Baskerville, Georgia, serif !important;
+          color: #000000 !important;
+          line-height: 1.4 !important;
+          background-color: #ffffff !important;
+        }
+        .resume-paper h1 {
+          text-align: center !important;
+          font-size: 22px !important;
+          font-weight: bold !important;
+          margin-top: 0 !important;
+          margin-bottom: 5px !important;
+          text-transform: uppercase !important;
+          color: #000000 !important;
+          border-bottom: none !important;
+          padding-bottom: 0 !important;
+        }
+        .resume-paper h1 ~ p {
+          text-align: center !important;
+          margin: 3px 0 !important;
+          font-size: 13px !important;
+          color: #333333 !important;
+        }
+        .resume-paper h2 ~ p, 
+        .resume-paper h2 ~ ul p {
+          text-align: left !important;
+        }
+        .resume-paper h2 {
+          font-size: 15px !important;
+          font-weight: bold !important;
+          color: #000000 !important;
+          border-bottom: 2px solid #0056b3 !important;
+          margin-top: 18px !important;
+          margin-bottom: 8px !important;
+          padding-bottom: 2px !important;
+          text-transform: uppercase !important;
+          letter-spacing: 0.5px !important;
+          text-align: left !important;
+        }
+        .resume-paper h3 {
+          font-size: 13px !important;
+          font-weight: bold !important;
+          margin-top: 10px !important;
+          margin-bottom: 4px !important;
+          color: #000000 !important;
+          text-align: left !important;
+        }
+        .resume-paper ul {
+          margin-top: 4px !important;
+          margin-bottom: 6px !important;
+          padding-left: 20px !important;
+          list-style-type: disc !important;
+        }
+        .resume-paper li {
+          margin-bottom: 3px !important;
+          font-size: 13px !important;
+          line-height: 1.4 !important;
+          color: #111111 !important;
+          text-align: left !important;
+        }
+        .resume-paper a {
+          color: #0056b3 !important;
+          text-decoration: underline !important;
+        }
+      `}</style>
       <div>
         <h1 className="text-3xl font-extrabold tracking-tight">ATS Resume Optimizer</h1>
         <p className="text-sm text-slate-500 mt-1">Cross-reference target job descriptions to identify missing keywords and boost ATS parsing scores.</p>
@@ -122,6 +305,49 @@ export default function ResumeOptimizer() {
         </div>
 
       </div>
+
+      {report && report.optimized_resume && (
+        <div className="skeuo-card p-6 space-y-4 border border-emerald-500/15">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-200 dark:border-slate-800 pb-3">
+            <div>
+              <h3 className="text-base font-extrabold text-emerald-600 flex items-center gap-2">
+                <Award className="w-5 h-5 text-emerald-500" />
+                <span>AI Generated Optimized Resume</span>
+              </h3>
+              <p className="text-[10px] text-slate-400 mt-0.5 font-bold uppercase">Ready-to-use resume optimized with target ATS key terms</p>
+            </div>
+            <div className="flex gap-2 w-full sm:w-auto">
+              <button 
+                onClick={downloadMarkdownResume}
+                className="flex-1 sm:flex-none skeuo-btn skeuo-btn-secondary py-2 text-xs px-4"
+              >
+                Download Markdown (.md)
+              </button>
+              <button 
+                onClick={printResume}
+                className="flex-1 sm:flex-none skeuo-btn skeuo-btn-primary py-2 text-xs px-4"
+              >
+                Print / Save as PDF
+              </button>
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-4">
+            <div className="bg-white text-black p-8 rounded-xl border border-slate-200 dark:border-slate-800 shadow-inner max-h-[600px] overflow-y-auto resume-paper">
+              <div 
+                dangerouslySetInnerHTML={{ __html: marked.parse(report.optimized_resume) }}
+              />
+            </div>
+            
+            <details className="text-xs">
+              <summary className="cursor-pointer text-slate-500 font-bold hover:text-slate-700 select-none uppercase tracking-wider">Show Raw Markdown Source</summary>
+              <pre className="bg-slate-50 dark:bg-slate-900/50 p-4 rounded-xl border border-slate-200 dark:border-slate-800 font-mono whitespace-pre-wrap mt-2 text-slate-700 dark:text-slate-300 max-h-[250px] overflow-y-auto">
+                {report.optimized_resume}
+              </pre>
+            </details>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

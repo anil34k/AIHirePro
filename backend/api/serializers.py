@@ -1,5 +1,9 @@
 from rest_framework import serializers
-from users.models import User, CompanyProfile, JobSeekerProfile
+from users.models import (
+    User, CompanyProfile, JobSeekerProfile,
+    Education, Experience, Skill, Certification, Project,
+    ProfessionalLink, Interest, Hobby
+)
 from jobs.models import Job, Application, HiringRecord
 from resumes.models import Resume
 from core.models import AIRecommendation, Notification, AITelemetry
@@ -7,7 +11,6 @@ from interviews.models import InterviewSession, InterviewQuestion, InterviewAnsw
 from academy.models import CourseRecommendation
 from portfolio.models import PublicPortfolio
 from scheduler.models import InterviewSchedule
-from chatbot.models import ChatHistory
 from code_arena.models import CodingChallenge, CodeSubmission
 
 class UserSerializer(serializers.ModelSerializer):
@@ -25,12 +28,133 @@ class CompanyProfileSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
+class EducationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Education
+        fields = '__all__'
+        read_only_fields = ('profile',)
+
+
+class ExperienceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Experience
+        fields = '__all__'
+        read_only_fields = ('profile',)
+
+
+class SkillSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Skill
+        fields = '__all__'
+        read_only_fields = ('profile',)
+
+
+class CertificationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Certification
+        fields = '__all__'
+        read_only_fields = ('profile',)
+
+
+class ProjectSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Project
+        fields = '__all__'
+        read_only_fields = ('profile',)
+
+
+class ProfessionalLinkSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProfessionalLink
+        fields = '__all__'
+        read_only_fields = ('profile',)
+
+
+class InterestSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Interest
+        fields = '__all__'
+        read_only_fields = ('profile',)
+
+
+class HobbySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Hobby
+        fields = '__all__'
+        read_only_fields = ('profile',)
+
+
 class JobSeekerProfileSerializer(serializers.ModelSerializer):
     user = UserSerializer(read_only=True)
+    active_resume = serializers.SerializerMethodField()
+    
+    # Nested lists
+    educations = EducationSerializer(many=True, read_only=True)
+    experiences = ExperienceSerializer(many=True, read_only=True)
+    skills_list = SkillSerializer(many=True, read_only=True)
+    certifications_list = CertificationSerializer(many=True, read_only=True)
+    projects_list = ProjectSerializer(many=True, read_only=True)
+    links_list = ProfessionalLinkSerializer(many=True, read_only=True)
+    interests_list = InterestSerializer(many=True, read_only=True)
+    hobbies_list = HobbySerializer(many=True, read_only=True)
+    
+    # Backward compatibility properties
+    skills = serializers.ReadOnlyField()
+    education = serializers.ReadOnlyField()
+    experience = serializers.ReadOnlyField()
+    projects = serializers.ReadOnlyField()
+    certifications = serializers.ReadOnlyField()
+    
+    linkedin = serializers.ReadOnlyField()
+    github = serializers.ReadOnlyField()
+    portfolio = serializers.ReadOnlyField()
+    personal_website = serializers.ReadOnlyField()
+    resume_website = serializers.ReadOnlyField()
+    leetcode = serializers.ReadOnlyField()
+    hackerrank = serializers.ReadOnlyField()
+    codechef = serializers.ReadOnlyField()
+    codeforces = serializers.ReadOnlyField()
+    kaggle = serializers.ReadOnlyField()
+    behance = serializers.ReadOnlyField()
+    dribbble = serializers.ReadOnlyField()
     
     class Meta:
         model = JobSeekerProfile
         fields = '__all__'
+
+    def get_active_resume(self, obj):
+        resume = Resume.objects.filter(user=obj.user, is_active=True).first()
+        if resume:
+            import os
+            request = self.context.get('request')
+            
+            if resume.file:
+                file_url = resume.file.url
+                if request:
+                    file_url = request.build_absolute_uri(file_url)
+                else:
+                    file_url = f"http://localhost:8000{file_url}"
+                
+                try:
+                    file_size = resume.file.size
+                except Exception:
+                    file_size = None
+                file_name = os.path.basename(resume.file.name)
+            else:
+                file_url = None
+                file_size = 0
+                file_name = "demo_resume.pdf"
+                
+            return {
+                'id': resume.id,
+                'file_name': file_name,
+                'file_url': file_url,
+                'uploaded_at': resume.uploaded_at.isoformat(),
+                'file_size': file_size,
+                'parsed_json': resume.parsed_json,
+                'is_active': resume.is_active
+            }
+        return None
 
 
 class RegisterSerializer(serializers.ModelSerializer):
@@ -104,11 +228,20 @@ class ApplicationSerializer(serializers.ModelSerializer):
     company_name = serializers.CharField(source='job.company.name', read_only=True)
     resume_file = serializers.SerializerMethodField()
     resume_parsed = serializers.JSONField(source='resume.parsed_json', read_only=True)
+    candidate_links = serializers.SerializerMethodField()
+    presence_analysis = serializers.SerializerMethodField()
+    seeker_profile = serializers.SerializerMethodField()
 
     class Meta:
         model = Application
         fields = '__all__'
         read_only_fields = ('seeker', 'match_score', 'strengths', 'missing_skills')
+
+    def get_seeker_profile(self, obj):
+        profile = getattr(obj.seeker, 'seeker_profile', None)
+        if profile:
+            return JobSeekerProfileSerializer(profile, context=self.context).data
+        return None
 
     def get_seeker_name(self, obj):
         return f"{obj.seeker.first_name} {obj.seeker.last_name}" or obj.seeker.username
@@ -119,6 +252,36 @@ class ApplicationSerializer(serializers.ModelSerializer):
             if request:
                 return request.build_absolute_uri(obj.resume.file.url)
             return f"http://localhost:8000{obj.resume.file.url}"
+        return None
+
+    def get_candidate_links(self, obj):
+        profile = getattr(obj.seeker, 'seeker_profile', None)
+        if profile:
+            return {
+                "linkedin": profile.linkedin,
+                "github": profile.github,
+                "portfolio": profile.portfolio,
+                "personal_website": profile.personal_website,
+                "resume_website": profile.resume_website,
+                "leetcode": profile.leetcode,
+                "hackerrank": profile.hackerrank,
+                "codechef": profile.codechef,
+                "codeforces": profile.codeforces,
+                "kaggle": profile.kaggle,
+                "behance": profile.behance,
+                "dribbble": profile.dribbble,
+            }
+        return None
+
+    def get_presence_analysis(self, obj):
+        profile = getattr(obj.seeker, 'seeker_profile', None)
+        if profile:
+            from core.services.ai_service import analyze_professional_presence
+            return analyze_professional_presence(
+                github_url=profile.github,
+                portfolio_url=profile.portfolio,
+                skills=profile.skills
+            )
         return None
 
 
@@ -198,7 +361,7 @@ class PublicPortfolioSerializer(serializers.ModelSerializer):
 class InterviewScheduleSerializer(serializers.ModelSerializer):
     candidate_name = serializers.SerializerMethodField()
     recruiter_name = serializers.SerializerMethodField()
-    job_title = serializers.CharField(source='job.title', read_only=True)
+    job_title_display = serializers.SerializerMethodField()
 
     class Meta:
         model = InterviewSchedule
@@ -210,11 +373,8 @@ class InterviewScheduleSerializer(serializers.ModelSerializer):
     def get_recruiter_name(self, obj):
         return obj.recruiter.company_profile.name if hasattr(obj.recruiter, 'company_profile') else obj.recruiter.username
 
-
-class ChatHistorySerializer(serializers.ModelSerializer):
-    class Meta:
-        model = ChatHistory
-        fields = '__all__'
+    def get_job_title_display(self, obj):
+        return obj.job_title or (obj.job.title if obj.job else 'Unknown Position')
 
 
 class AITelemetrySerializer(serializers.ModelSerializer):
@@ -224,9 +384,15 @@ class AITelemetrySerializer(serializers.ModelSerializer):
 
 
 class CodingChallengeSerializer(serializers.ModelSerializer):
+    visible_test_cases = serializers.JSONField(read_only=True)
+    submission_count = serializers.SerializerMethodField()
+
     class Meta:
         model = CodingChallenge
         fields = '__all__'
+
+    def get_submission_count(self, obj):
+        return CodeSubmission.objects.filter(challenge=obj).count()
 
 
 class CodeSubmissionSerializer(serializers.ModelSerializer):

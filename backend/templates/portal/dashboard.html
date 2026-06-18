@@ -1,0 +1,510 @@
+{% extends 'portal/base.html' %}
+{% load static %}
+
+{% block content %}
+<!-- Dashboard Header -->
+<div class="dashboard-header">
+    <div>
+        <h1 class="dashboard-title">Candidate Portal</h1>
+        <p class="dashboard-subtitle">Review AI recommendations, check skill gaps, and track active applications.</p>
+    </div>
+    <div class="profile-completion-widget">
+        <div class="progress-ring-container">
+                <svg class="progress-ring" width="80" height="80" viewBox="0 0 80 80">
+                <circle class="progress-ring-bg" cx="40" cy="40" r="34" fill="none" stroke="#e9ecef" stroke-width="6"/>
+                <circle class="progress-ring-fill" id="progressCircle" cx="40" cy="40" r="34" fill="none" stroke="#6366f1" stroke-width="6"
+                    stroke-linecap="round" stroke-dasharray="213.6" stroke-dashoffset="213.6"
+                    transform="rotate(-90, 40, 40)" style="stroke-dashoffset: 213.6"/>
+            </svg>
+            <script>setTimeout(function(){ var p = {{ profile_completion }}; var circ = 2 * Math.PI * 34; var offset = circ - (circ * p / 100); document.getElementById('progressCircle').style.strokeDashoffset = offset; }, 100);</script>
+            <div class="progress-ring-text">
+                <span class="progress-pct">{{ profile_completion }}%</span>
+            </div>
+        </div>
+        <div class="completion-info">
+            <strong>Profile Completed</strong>
+            <small class="text-muted">
+                {% if profile_completion >= 80 %}Robust Resume Profile
+                {% elif profile_completion >= 50 %}Moderate Profile
+                {% else %}Basic Profile - Add More Details{% endif %}
+            </small>
+        </div>
+    </div>
+</div>
+
+<!-- Tab Navigation -->
+<div class="tab-navigation">
+    <div class="tab-nav-inner">
+        <button class="tab-btn active" data-tab="resume-tab">
+            <i class="bi bi-file-earmark-text"></i> My Resume
+        </button>
+        <button class="tab-btn" data-tab="job-matches-tab">
+            <i class="bi bi-robot"></i> AI Job Matches
+        </button>
+        <button class="tab-btn" data-tab="search-tab">
+            <i class="bi bi-search"></i> Manual Search
+        </button>
+        <button class="tab-btn" data-tab="applications-tab">
+            <i class="bi bi-send-check"></i> My Applications
+        </button>
+        <button class="tab-btn" data-tab="edit-profile-tab">
+            <i class="bi bi-person-gear"></i> Edit Profile
+        </button>
+        <div class="tab-active-indicator" id="tabIndicator"></div>
+    </div>
+</div>
+
+<!-- Tab Content -->
+<div class="tab-content-wrapper">
+
+    <!-- ============ MY RESUME TAB ============ -->
+    <div class="tab-pane active" id="resume-tab">
+        <div class="row g-4">
+            <!-- Left Card - Active Resume -->
+            <div class="col-lg-5">
+                <div class="card resume-card">
+                    <div class="card-header-custom">
+                        <i class="bi bi-file-earmark-pdf text-primary"></i>
+                        <h5>Active Resume</h5>
+                    </div>
+                    <div class="card-body text-center">
+                        <div class="resume-icon-display">
+                            <i class="bi bi-file-earmark-pdf-fill"></i>
+                        </div>
+                        {% if resume %}
+                        <h6 class="mt-3">{{ resume.file.name|cut:"resumes/" }}</h6>
+                        <p class="text-muted small">Uploaded: {{ resume.uploaded_at|date:"M d, Y" }}</p>
+                        {% else %}
+                        <h6 class="mt-3 text-muted">No resume uploaded</h6>
+                        <p class="text-muted small">Upload your resume to get AI-powered insights</p>
+                        {% endif %}
+                        <div class="resume-actions">
+                            <form method="post" enctype="multipart/form-data" id="resumeUploadForm">
+                                {% csrf_token %}
+                                <input type="file" name="file" accept=".pdf,.docx" id="resumeFileInput" hidden>
+                            </form>
+                            <button class="btn btn-sm btn-outline-primary" onclick="document.getElementById('resumeFileInput').click()">
+                                <i class="bi bi-upload me-1"></i>Upload
+                            </button>
+                            {% if resume %}
+                            <a href="{{ resume.file.url }}" class="btn btn-sm btn-outline-secondary" target="_blank">
+                                <i class="bi bi-eye me-1"></i>View
+                            </a>
+                            <a href="{{ resume.file.url }}" class="btn btn-sm btn-outline-secondary" download>
+                                <i class="bi bi-download me-1"></i>Download
+                            </a>
+                            <button class="btn btn-sm btn-outline-danger" onclick="deleteResume({{ resume.id }})">
+                                <i class="bi bi-trash me-1"></i>Delete
+                            </button>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Card - Resume Parsing Results -->
+            <div class="col-lg-7">
+                <div class="card">
+                    <div class="card-header-custom">
+                        <i class="bi bi-cpu text-success"></i>
+                        <h5>Resume Parsing Results</h5>
+                        <button class="btn btn-sm btn-primary ms-auto" onclick="parseResume()">
+                            <i class="bi bi-arrow-repeat me-1"></i>Parse with AI
+                        </button>
+                    </div>
+                    <div class="card-body" id="parsedResults">
+                        {% if resume and resume.parsed_json %}
+                        <div class="parsed-section">
+                            <h6 class="section-label"><i class="bi bi-person-badge me-2"></i>Identity Extracted</h6>
+                            <div class="parsed-grid">
+                                <div><small class="text-muted">Name</small><p class="mb-0 fw-medium">{{ resume.parsed_json.full_name }}</p></div>
+                                <div><small class="text-muted">Email</small><p class="mb-0 fw-medium">{{ resume.parsed_json.email }}</p></div>
+                                <div><small class="text-muted">Phone</small><p class="mb-0 fw-medium">{{ resume.parsed_json.phone }}</p></div>
+                            </div>
+                        </div>
+                        <div class="parsed-section">
+                            <h6 class="section-label"><i class="bi bi-code-slash me-2"></i>Technical Skills</h6>
+                            <div class="skills-tags">
+                                {% for skill in resume.parsed_json.skills %}
+                                <span class="skill-tag">{{ skill }}</span>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% else %}
+                        <div class="text-center text-muted py-4">
+                            <i class="bi bi-file-earmark-text fs-1"></i>
+                            <p class="mt-2">Click "Parse with AI" to extract resume data</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Education Timeline -->
+                <div class="card mt-4">
+                    <div class="card-header-custom">
+                        <i class="bi bi-mortarboard text-warning"></i>
+                        <h5>Education History</h5>
+                    </div>
+                    <div class="card-body">
+                        {% for edu in education_list %}
+                        <div class="timeline-item">
+                            <div class="timeline-dot"></div>
+                            <div>
+                                <h6 class="mb-1">{{ edu.degree }}</h6>
+                                <p class="mb-1 text-muted">{{ edu.college }}</p>
+                                <small class="text-muted">{{ edu.start_year }} - {{ edu.end_year|default:"Present" }}</small>
+                            </div>
+                        </div>
+                        {% empty %}<p class="text-muted small text-center py-2">No education added</p>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Experience Timeline -->
+                <div class="card mt-4">
+                    <div class="card-header-custom">
+                        <i class="bi bi-briefcase text-info"></i>
+                        <h5>Experience History</h5>
+                    </div>
+                    <div class="card-body">
+                        {% for exp in experience_list %}
+                        <div class="timeline-item">
+                            <div class="timeline-dot"></div>
+                            <div>
+                                <h6 class="mb-1">{{ exp.job_title }}</h6>
+                                <p class="mb-1 text-muted">{{ exp.company_name }}</p>
+                                <small class="text-muted">{{ exp.start_date|date:"M Y" }} - {{ exp.end_date|date:"M Y"|default:"Present" }}</small>
+                                {% if exp.description %}<p class="mt-2 small text-muted">{{ exp.description }}</p>{% endif %}
+                            </div>
+                        </div>
+                        {% empty %}<p class="text-muted small text-center py-2">No experience added</p>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Projects -->
+                <div class="card mt-4">
+                    <div class="card-header-custom">
+                        <i class="bi bi-folder2-open text-purple"></i>
+                        <h5>Projects</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            {% for project in projects_list %}
+                            <div class="col-md-6">
+                                <div class="project-card">
+                                    <h6>{{ project.name }}</h6>
+                                    <div class="project-tech">
+                                        {% if project.technologies_used %}
+                                            {% for tech in project.technologies_used %}
+                                            <span class="tech-badge">{{ tech }}</span>
+                                            {% endfor %}
+                                        {% endif %}
+                                    </div>
+                                    {% if project.description %}
+                                    <p class="small text-muted mt-2">{{ project.description }}</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% empty %}
+                            <div class="col-12"><p class="text-muted small text-center py-2">No projects added</p></div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Match Insights + Missing Skills Row -->
+        <div class="row g-4 mt-2">
+            <div class="col-md-4">
+                <div class="card insight-card">
+                    <div class="card-body text-center">
+                        <div class="insight-value" style="color:#6366f1">{{ profile_completion }}%</div>
+                        <p class="insight-label">Resume Strength</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card insight-card">
+                    <div class="card-body text-center">
+                        <div class="insight-value" style="color:#10b981" id="atsScoreDisplay">--</div>
+                        <p class="insight-label">ATS Score</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card insight-card">
+                    <div class="card-body text-center">
+                        <div class="insight-value" style="color:#f59e0b" id="skillMatchDisplay">--</div>
+                        <p class="insight-label">Skill Match Rate</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Market Missing Skills -->
+        <div class="card mt-4">
+            <div class="card-header-custom">
+                <i class="bi bi-graph-up-arrow text-danger"></i>
+                <h5>Market Missing Skills</h5>
+            </div>
+            <div class="card-body">
+                <div class="missing-skills">
+                    {% for skill in missing_skills %}
+                    <span class="missing-skill-badge">{{ skill }}</span>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Recommended Actions -->
+        <div class="card mt-4">
+            <div class="card-header-custom">
+                <i class="bi bi-lightbulb text-warning"></i>
+                <h5>Recommended Actions</h5>
+            </div>
+            <div class="card-body">
+                <div class="action-list">
+                    <div class="action-item"><i class="bi bi-linkedin text-primary"></i><span>Add LinkedIn profile</span></div>
+                    <div class="action-item"><i class="bi bi-github text-dark"></i><span>Add GitHub profile</span></div>
+                    <div class="action-item"><i class="bi bi-patch-check text-success"></i><span>Upload certifications</span></div>
+                    <div class="action-item"><i class="bi bi-folder-plus text-info"></i><span>Add projects</span></div>
+                    <div class="action-item"><i class="bi bi-arrow-up-circle text-warning"></i><span>Improve missing skills</span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ AI JOB MATCHES TAB ============ -->
+    <div class="tab-pane" id="job-matches-tab">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h4 class="mb-0"><i class="bi bi-robot me-2 text-primary"></i>Recommended Jobs</h4>
+            <button class="btn btn-sm btn-outline-primary" onclick="loadJobMatches()"><i class="bi bi-arrow-repeat me-1"></i>Refresh</button>
+        </div>
+        <div class="row g-4" id="jobMatchesContainer">
+            {% for rec in recommendations %}
+            <div class="col-lg-6">
+                <div class="job-card">
+                    <div class="job-card-header">
+                        <div class="company-logo">{{ rec.job.company.name|first|upper }}</div>
+                        <div>
+                            <h5 class="mb-1">{{ rec.job.title }}</h5>
+                            <p class="text-muted mb-0">{{ rec.job.company.name }} • {{ rec.job.location }}</p>
+                        </div>
+                        <div class="match-badge">{{ rec.match_score }}% Match</div>
+                    </div>
+                    <div class="job-card-skills">
+                        {% for skill in rec.job.skills_required %}
+                        <span class="skill-tag">{{ skill }}</span>
+                        {% endfor %}
+                    </div>
+                    <div class="job-card-footer">
+                        <span class="salary">{% if rec.job.salary_min %}₹{{ rec.job.salary_min }} - {{ rec.job.salary_max }}{% else %} negotiable {% endif %}</span>
+                        <div>
+                            <button class="btn btn-sm btn-primary">Apply Now</button>
+                            <button class="btn btn-sm btn-outline-secondary"><i class="bi bi-bookmark"></i></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="col-12 text-center py-5 text-muted">
+                <i class="bi bi-briefcase fs-1"></i>
+                <p class="mt-2">No job recommendations yet. Complete your profile to get matches.</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- ============ MANUAL SEARCH TAB ============ -->
+    <div class="tab-pane" id="search-tab">
+        <div class="search-bar-container">
+            <div class="search-input-group">
+                <i class="bi bi-search"></i>
+                <input type="text" class="form-control" placeholder="Search jobs by title, skill, or company..." id="jobSearchInput">
+                <button class="btn btn-primary" onclick="manualSearch()">Search</button>
+            </div>
+        </div>
+        <div class="search-filters">
+            <select class="form-select" id="filterSkills"><option value="">All Skills</option></select>
+            <select class="form-select" id="filterLocation"><option value="">All Locations</option></select>
+            <select class="form-select" id="filterType"><option value="">All Types</option><option>Full-time</option><option>Part-time</option><option>Internship</option><option>Contract</option></select>
+            <select class="form-select" id="filterExperience"><option value="">Experience</option><option>0-1</option><option>1-3</option><option>3-5</option><option>5+</option></select>
+        </div>
+        <div class="row g-4 mt-2" id="searchResults">
+            <div class="col-12 text-center py-5 text-muted"><i class="bi bi-search fs-1"></i><p class="mt-2">Use the search bar above to find jobs</p></div>
+        </div>
+    </div>
+
+    <!-- ============ MY APPLICATIONS TAB ============ -->
+    <div class="tab-pane" id="applications-tab">
+        <h4 class="mb-4"><i class="bi bi-send-check me-2 text-primary"></i>My Applications</h4>
+        {% if applications %}
+        <div class="application-timeline">
+            {% for app in applications %}
+            <div class="application-card">
+                <div class="app-status-badge {{ app.status|lower }}">{{ app.get_status_display }}</div>
+                <div class="app-info">
+                    <h5>{{ app.job.title }}</h5>
+                    <p class="text-muted mb-1">{{ app.job.company.name }} • {{ app.job.location }}</p>
+                    <small class="text-muted">Applied {{ app.applied_at|date:"M d, Y" }}</small>
+                </div>
+                <div class="app-meta">
+                    {% if app.match_score %}<span class="badge bg-light text-dark">Match: {{ app.match_score }}%</span>{% endif %}
+                    {% if app.ats_score %}<span class="badge bg-light text-dark">ATS: {{ app.ats_score }}</span>{% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-center py-5 text-muted">
+            <i class="bi bi-send fs-1"></i>
+            <p class="mt-2">No applications yet. Start applying to jobs!</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- ============ EDIT PROFILE TAB ============ -->
+    <div class="tab-pane" id="edit-profile-tab">
+        <h4 class="mb-4"><i class="bi bi-person-gear me-2 text-primary"></i>Edit Profile</h4>
+        <form id="profileForm" method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="row g-4">
+                <!-- Basic Information -->
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header-custom"><i class="bi bi-info-circle text-primary"></i><h5>Basic Information</h5></div>
+                        <div class="card-body">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label small">Full Name</label>
+                                    <input type="text" class="form-control" value="{{ user.get_full_name }}" placeholder="John Doe">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label small">Headline</label>
+                                    <input type="text" class="form-control" value="{{ profile.headline }}" placeholder="Software Engineer">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label small">Location</label>
+                                    <input type="text" class="form-control" value="{{ profile.location }}" placeholder="Bangalore, India">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label small">Phone</label>
+                                    <input type="text" class="form-control" value="{{ user.phone }}" placeholder="+91 98765 43210">
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label small">About Me</label>
+                                    <textarea class="form-control" rows="3" placeholder="Write a brief summary...">{{ profile.about_me }}</textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Social Links -->
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header-custom"><i class="bi bi-link-45deg text-info"></i><h5>Links</h5></div>
+                        <div class="card-body">
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <label class="form-label small"><i class="bi bi-linkedin text-primary"></i> LinkedIn</label>
+                                    <input type="text" class="form-control" value="{% if profile %}{{ profile.linkedin }}{% endif %}" placeholder="LinkedIn URL">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label small"><i class="bi bi-github text-dark"></i> GitHub</label>
+                                    <input type="text" class="form-control" value="{% if profile %}{{ profile.github }}{% endif %}" placeholder="GitHub URL">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label small"><i class="bi bi-globe text-success"></i> Portfolio</label>
+                                    <input type="text" class="form-control" value="{% if profile %}{{ profile.portfolio }}{% endif %}" placeholder="Portfolio URL">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Skills -->
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header-custom"><i class="bi bi-code-slash text-warning"></i><h5>Skills</h5></div>
+                        <div class="card-body">
+                            <div class="skills-tags mb-3" id="skillsContainer">
+                                {% for skill in skills_list %}
+                                <span class="skill-tag">{{ skill.name }} <i class="bi bi-x ms-1" onclick="this.parentElement.remove()"></i></span>
+                                {% endfor %}
+                            </div>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="skillInput" placeholder="Type a skill and press Enter">
+                                <button class="btn btn-outline-primary" onclick="addSkillTag()">Add</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Save Button -->
+                <div class="col-12">
+                    <button type="submit" class="btn btn-primary btn-lg w-100">
+                        <i class="bi bi-check2-circle me-2"></i>Save Changes
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Debug Panel (visible only in dev mode) -->
+{% if debug_mode %}
+<div class="debug-panel" id="debugPanel">
+    <div class="debug-header">
+        <span><i class="bi bi-bug me-1"></i> Developer Debug Panel</span>
+        <button type="button" class="btn-close-sm" onclick="document.getElementById('debugPanel').classList.remove('visible')">&times;</button>
+    </div>
+    <div class="debug-body" id="debugBody">
+        <p class="text-muted small">Loading debug data...</p>
+    </div>
+    <div class="debug-footer">
+        <small>ATS: <span id="debugAtsScore">--</span> | Strength: <span id="debugResumeStrength">--</span></small>
+    </div>
+</div>
+<button class="debug-toggle-btn" id="debugToggle" title="Toggle Debug Panel">
+    <i class="bi bi-bug"></i>
+</button>
+
+<style>
+.debug-panel {
+    position: fixed; bottom: 80px; right: 24px;
+    width: 380px; max-height: 400px;
+    background: var(--bg-card); border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-lg);
+    z-index: 500;
+    display: none; flex-direction: column;
+    overflow: hidden;
+    animation: fadeIn 0.3s ease;
+}
+.debug-panel.visible { display: flex; }
+.debug-header { display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: #6366f1; color: white; font-size: 13px; font-weight: 600; }
+.debug-header .btn-close-sm { background: none; border: none; color: white; font-size: 18px; cursor: pointer; }
+.debug-body { flex: 1; overflow-y: auto; padding: 12px 14px; font-size: 12px; }
+.debug-body .debug-table { width: 100%; border-collapse: collapse; }
+.debug-body .debug-table th, .debug-body .debug-table td { padding: 4px 8px; text-align: left; border-bottom: 1px solid var(--border-color); }
+.debug-body .debug-table th { font-weight: 600; color: var(--text-secondary); font-size: 11px; text-transform: uppercase; }
+.debug-meta { margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border-color); color: var(--text-muted); }
+.debug-footer { padding: 8px 14px; border-top: 1px solid var(--border-color); font-size: 11px; color: var(--text-muted); }
+.debug-toggle-btn {
+    position: fixed; bottom: 24px; right: 24px;
+    width: 40px; height: 40px;
+    border-radius: 50%; border: 1px solid var(--border-color);
+    background: var(--bg-card); color: #6366f1;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; z-index: 501;
+    box-shadow: var(--shadow-md);
+    transition: var(--transition);
+}
+.debug-toggle-btn:hover { background: #6366f1; color: white; transform: scale(1.1); }
+</style>
+{% endif %}
+
+{% endblock %}

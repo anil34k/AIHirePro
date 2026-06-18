@@ -122,7 +122,7 @@ export default function TalentScout() {
                   <span>Contact</span>
                 </a>
                 <a 
-                  href={`/portfolio/${cand.name.toLowerCase().replace(/\s+/g, '')}`} 
+                  href={cand.portfolio_url || `/portfolio/${cand.username}`} 
                   target="_blank" 
                   rel="noopener noreferrer"
                   className="skeuo-btn skeuo-btn-primary text-xs py-1.5 flex-1 lg:flex-none text-center"

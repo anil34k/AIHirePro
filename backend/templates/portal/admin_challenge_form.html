@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% if edit_mode %}Edit{% else %}Add{% endif %} Challenge — AIHire Pro</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: #f8fafc; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; min-height: 100vh; padding: 32px; }
+        :root { --primary: #6366f1; --primary-dark: #4f46e5; --surface: #fff; --border: #e2e8f0; --text: #1e293b; --text-muted: #64748b; --bg: #f1f5f9; }
+        [data-bs-theme="dark"] { --surface: #1e293b; --border: #334155; --text: #f1f5f9; --text-muted: #94a3b8; --bg: #0f172a; body { background: #0f172a; } }
+        .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+        .page-header h1 { font-size: 22px; font-weight: 700; color: var(--text); margin: 0; }
+        .form-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 24px; margin-bottom: 20px; }
+        .form-card h5 { font-size: 15px; font-weight: 600; color: var(--text); margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; }
+        .form-group { margin-bottom: 16px; }
+        .form-group label { font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.3px; display: block; margin-bottom: 4px; }
+        .form-control, .form-select { width: 100%; padding: 8px 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); color: var(--text); font-size: 13px; }
+        .form-control:focus, .form-select:focus { border-color: var(--primary); outline: none; box-shadow: 0 0 0 2px rgba(99,102,241,0.15); }
+        textarea.form-control { font-family: 'SF Mono', 'Consolas', monospace; min-height: 80px; resize: vertical; }
+        .btn-primary { background: var(--primary); border: none; color: #fff; padding: 8px 20px; border-radius: 8px; font-size: 13px; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; cursor: pointer; }
+        .btn-primary:hover { background: var(--primary-dark); }
+        .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text); padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 500; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; }
+        .btn-outline:hover { background: var(--bg); }
+        .btn-success { background: #10b981; border: none; color: #fff; padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; }
+        .btn-success:hover { background: #059669; }
+        .btn-sm { padding: 6px 12px; font-size: 12px; }
+        .import-section { background: var(--bg); border: 1px dashed var(--border); border-radius: 12px; padding: 20px; margin-bottom: 24px; }
+        .import-section h6 { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 12px; }
+        .form-check { display: flex; align-items: center; gap: 8px; }
+        .form-check input { width: 16px; height: 16px; }
+        .form-check label { font-size: 13px; color: var(--text); margin: 0; text-transform: none; letter-spacing: 0; }
+        .error-text { color: #ef4444; font-size: 12px; margin-top: 4px; }
+        .action-bar { display: flex; gap: 12px; margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--border); }
+        .helper-text { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+        @media (max-width: 768px) { body { padding: 16px; } }
+        .toast-container { position: fixed; bottom: 24px; right: 24px; z-index: 9999; }
+        .toast-msg { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 12px 16px; margin-top: 8px; box-shadow: 0 8px 24px rgba(0,0,0,0.12); display: flex; align-items: center; gap: 10px; font-size: 13px; font-weight: 500; color: var(--text); min-width: 280px; animation: slideIn 0.3s ease; }
+        .toast-msg .bi { font-size: 18px; }
+        .toast-success .bi { color: #10b981; }
+        .toast-error .bi { color: #ef4444; }
+        @keyframes slideIn { from { opacity: 0; transform: translateX(100px); } to { opacity: 1; transform: translateX(0); } }
+    </style>
+</head>
+<body>
+    <div class="container-fluid" style="max-width:1100px;margin:0 auto">
+        <div class="page-header">
+            <h1><i class="bi bi-code-slash me-2" style="color:var(--primary)"></i>{% if edit_mode %}Edit Challenge{% else %}Add New Challenge{% endif %}</h1>
+            <div>
+                <a href="{% url 'admin_challenges' %}" class="btn-outline btn-sm"><i class="bi bi-arrow-left"></i> Back</a>
+            </div>
+        </div>
+
+        {% if error %}
+        <div class="alert alert-danger" style="background:#fef2f2;border:1px solid #fecaca;border-radius:12px;padding:12px 16px;color:#b91c1c;font-size:13px;font-weight:500;margin-bottom:16px">{{ error }}</div>
+        {% endif %}
+
+        <!-- LeetCode Import Section -->
+        {% if not edit_mode %}
+        <div class="import-section" id="importSection">
+            <h6><i class="bi bi-cloud-download me-1"></i> Import from LeetCode URL</h6>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+                <input type="url" id="leetUrl" class="form-control" style="flex:1;min-width:250px" placeholder="https://leetcode.com/problems/two-sum/" />
+                <button type="button" class="btn-success btn-sm" onclick="importFromLeetCode()"><i class="bi bi-download"></i> Import</button>
+            </div>
+            <div class="helper-text" style="margin-top:8px">Or fill in the form below manually.</div>
+        </div>
+        {% endif %}
+
+        <form method="POST" action="{% if edit_mode %}{% url 'admin_challenge_edit' challenge.id %}{% else %}{% url 'admin_challenge_add' %}{% endif %}">
+            {% csrf_token %}
+
+            <div class="form-card">
+                <h5><i class="bi bi-info-circle" style="color:var(--primary)"></i> Basic Information</h5>
+                <div class="form-grid">
+                    <div class="form-group" style="grid-column:1/-1">
+                        <label>Title</label>
+                        <input type="text" name="title" class="form-control" required value="{{ challenge.title|default:'' }}" placeholder="e.g. Two Sum" id="id_title" />
+                    </div>
+                    <div class="form-group" style="grid-column:1/-1">
+                        <label>Description</label>
+                        <textarea name="description" class="form-control" rows="5" id="id_description" placeholder="Problem statement...">{{ challenge.description|default:'' }}</textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Difficulty</label>
+                        <select name="difficulty" class="form-select" id="id_difficulty">
+                            {% for d in difficulties %}
+                            <option value="{{ d }}" {% if challenge.difficulty == d %}selected{% endif %}>{{ d|title }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Category</label>
+                        <select name="category" class="form-select" id="id_category">
+                            {% for c in categories %}
+                            <option value="{{ c }}" {% if challenge.category == c %}selected{% endif %}>{{ c|title }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group" style="grid-column:1/-1">
+                        <label>Function Signature</label>
+                        <input type="text" name="function_signature" class="form-control" value="{{ challenge.function_signature|default:'' }}" placeholder="def two_sum(nums, target):" id="id_signature" />
+                        <div class="helper-text">The expected function signature for this problem.</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-card">
+                <h5><i class="bi bi-file-code" style="color:var(--primary)"></i> Starter Code (by language)</h5>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Python</label>
+                        <textarea name="starter_code_python" class="form-control" rows="4" id="id_code_py">{{ challenge.starter_code_python|default:'# Write your solution here\n' }}</textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>JavaScript</label>
+                        <textarea name="starter_code_javascript" class="form-control" rows="4" id="id_code_js">{{ challenge.starter_code_javascript|default:'// Write your solution here\n' }}</textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Java</label>
+                        <textarea name="starter_code_java" class="form-control" rows="4" id="id_code_java">{{ challenge.starter_code_java|default:'// Write your solution here\n' }}</textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>C++</label>
+                        <textarea name="starter_code_cpp" class="form-control" rows="4" id="id_code_cpp">{{ challenge.starter_code_cpp|default:'// Write your solution here\n' }}</textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>C#</label>
+                        <textarea name="starter_code_csharp" class="form-control" rows="4" id="id_code_cs">{{ challenge.starter_code_csharp|default:'// Write your solution here\n' }}</textarea>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-card">
+                <h5><i class="bi bi-list-check" style="color:var(--primary)"></i> Test Cases & Samples</h5>
+                <div class="form-grid">
+                    <div class="form-group" style="grid-column:1/-1">
+                        <label>Visible Test Cases (JSON array)</label>
+                        <textarea name="visible_test_cases" class="form-control" rows="3" id="id_visible_tc">{{ challenge.visible_test_cases|default:'[]' }}</textarea>
+                        <div class="helper-text">Format: [{"input": "...", "output": "..."}]</div>
+                    </div>
+                    <div class="form-group" style="grid-column:1/-1">
+                        <label>Hidden Test Cases (JSON array)</label>
+                        <textarea name="hidden_test_cases" class="form-control" rows="3" id="id_hidden_tc">{{ challenge.hidden_test_cases|default:'[]' }}</textarea>
+                        <div class="helper-text">Same format as visible. These are not shown to users.</div>
+                    </div>
+                    <div class="form-group">
+                        <label>Sample Input</label>
+                        <input type="text" name="sample_input" class="form-control" value="{{ challenge.sample_input|default:'' }}" id="id_sample_in" />
+                    </div>
+                    <div class="form-group">
+                        <label>Sample Output</label>
+                        <input type="text" name="sample_output" class="form-control" value="{{ challenge.sample_output|default:'' }}" id="id_sample_out" />
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-card">
+                <h5><i class="bi bi-gear" style="color:var(--primary)"></i> Settings</h5>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Source URL</label>
+                        <input type="url" name="source_url" class="form-control" value="{{ challenge.source_url|default:'' }}" placeholder="https://leetcode.com/problems/..." id="id_source_url" />
+                    </div>
+                    <div class="form-group">
+                        <div class="form-check" style="margin-top:18px">
+                            <input type="checkbox" name="is_active" class="form-check-input" id="id_active" {% if challenge.is_active or not edit_mode %}checked{% endif %} />
+                            <label for="id_active">Active (visible to users)</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="action-bar">
+                <button type="submit" class="btn-primary"><i class="bi bi-check-lg"></i> {% if edit_mode %}Save Changes{% else %}Create Challenge{% endif %}</button>
+                <a href="{% url 'admin_challenges' %}" class="btn-outline"><i class="bi bi-x"></i> Cancel</a>
+            </div>
+        </form>
+    </div>
+
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script>
+        function showToast(msg, type) {
+            const container = document.getElementById('toastContainer');
+            const t = document.createElement('div');
+            t.className = 'toast-msg toast-' + type;
+            const icon = type === 'success' ? 'check-circle-fill' : 'x-circle-fill';
+            t.innerHTML = '<i class="bi bi-' + icon + '"></i> ' + msg;
+            container.appendChild(t);
+            setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 300); }, 3000);
+        }
+
+        function importFromLeetCode() {
+            const url = document.getElementById('leetUrl').value.trim();
+            if (!url) { showToast('Please enter a LeetCode URL', 'error'); return; }
+
+            document.querySelector('.btn-success').innerHTML = '<span class="spinner-border spinner-border-sm"></span> Importing...';
+            document.querySelector('.btn-success').disabled = true;
+
+            fetch('{% url "api_admin_import_leetcode" %}', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken'),
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({url: url}),
+            })
+            .then(r => r.json())
+            .then(d => {
+                document.querySelector('.btn-success').innerHTML = '<i class="bi bi-download"></i> Import';
+                document.querySelector('.btn-success').disabled = false;
+                if (d.success) {
+                    const data = d.data;
+                    document.getElementById('id_title').value = data.title || '';
+                    document.getElementById('id_description').value = data.description || '';
+                    document.getElementById('id_difficulty').value = data.difficulty || 'MEDIUM';
+                    document.getElementById('id_category').value = data.category || 'OTHER';
+                    document.getElementById('id_signature').value = data.function_signature || '';
+                    document.getElementById('id_visible_tc').value = JSON.stringify(data.visible_test_cases || [], null, 2);
+                    document.getElementById('id_sample_in').value = data.sample_input || '';
+                    document.getElementById('id_sample_out').value = data.sample_output || '';
+                    document.getElementById('id_source_url').value = url;
+                    showToast('Imported "' + data.title + '" from LeetCode', 'success');
+                } else {
+                    showToast(d.error || 'Import failed', 'error');
+                }
+            })
+            .catch(() => {
+                document.querySelector('.btn-success').innerHTML = '<i class="bi bi-download"></i> Import';
+                document.querySelector('.btn-success').disabled = false;
+                showToast('Network error', 'error');
+            });
+        }
+
+        function getCookie(name) {
+            let c = document.cookie.match('(^|;)\\s*' + name + '\\s*=\\s*([^;]+)');
+            return c ? c.pop() : '';
+        }
+
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        document.documentElement.setAttribute('data-bs-theme', savedTheme);
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

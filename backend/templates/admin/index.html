@@ -1,0 +1,47 @@
+{% extends "admin/index.html" %}
+
+{% block content %}
+<div id="content-main">
+    {% include "admin/app_list.html" with app_list=app_list show_changelinks=True %}
+
+    <div class="module" style="margin-top: 20px;">
+        <table style="width: 100%;">
+            <caption>
+                <a href="#" style="font-size: 14px; font-weight: 600;">⚙️ Management</a>
+            </caption>
+            <tbody>
+                <tr>
+                    <th scope="row">
+                        <a href="{% url 'admin_challenges' %}">Coding Challenges</a>
+                    </th>
+                    <td></td>
+                    <td>
+                        <a href="{% url 'admin_challenge_add' %}" class="changelink">Add</a>
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row">
+                        <a href="{% url 'admin_dashboard' %}">Admin Dashboard</a>
+                    </th>
+                    <td></td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <th scope="row">
+                        <a href="{% url 'recruiter_dashboard' %}">Recruiter Dashboard</a>
+                    </th>
+                    <td></td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <th scope="row">
+                        <a href="/django-admin/code_arena/">Django Admin — Code Arena</a>
+                    </th>
+                    <td></td>
+                    <td></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

@@ -52,6 +52,10 @@ class Application(models.Model):
     recruiter_notes = models.TextField(blank=True, null=True)
     applied_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    # New ATS fields
+    ats_score = models.IntegerField(default=0)  # Overall ATS score
+    ats_breakdown = models.JSONField(default=dict, blank=True)  # Detailed component scores
+    matched_skills = models.JSONField(default=list, blank=True)  # Matched skills for UI
 
     def __str__(self):
         return f"Application by {self.seeker.username} for {self.job.title}"
